@@ -1,0 +1,94 @@
+<html>
+<head>
+<title>Hello WebSocket</title>
+<script src="assets/lib/sockjs/sockjs.js"></script>
+<script src="assets/lib/stomp/dist/stomp.js"></script>
+<script type="text/javascript">
+	var stompClient = null;
+	var userId = "111";
+	var device = "all";
+	
+	function setConnected(connected) {
+		document.getElementById('connect').disabled = connected;
+		document.getElementById('disconnect').disabled = !connected;
+		document.getElementById('conversationDiv').style.visibility = connected ? 'visible'
+				: 'hidden';
+		document.getElementById('response').innerHTML = '';
+	}
+
+	function connect() {
+		var socket = new SockJS('/connect');
+		stompClient = Stomp.over(socket);
+		stompClient.connect('', '', function(frame) {
+			console.log('Connected: ' + frame);
+			var domain = encodeURIComponent("http://test.c.open.163.com/admin/campus/listPhasesByActivityId.do?activityId=1")
+			stompClient.subscribe("/app/message/subscribe/" + domain, function(
+					message) {
+				console.log("message....." + message);
+			});
+			
+			// 单独通道接受消息
+			stompClient.subscribe("/queue/message/pushToClient/" + userId, function(
+					message) {
+				console.log("message....." + message);
+				showGreeting(message.body);
+			});
+			
+			// 接受广播消息
+			stompClient.subscribe("/topic/message/pushForBroadcast/" + device, function(
+					message) {
+				console.log("message....." + message);
+				showGreeting(message.body);
+			});
+		}, function(error) {
+			console.log("STOMP protocol error " + error);
+		});
+	}
+
+	function disconnect() {
+		if (stompClient != null) {
+			stompClient.disconnect();
+			setConnected(false);
+			console.log("Disconnected");
+		}
+	}
+
+	function sendName() {
+		var name = document.getElementById('name').value;
+		stompClient.send("/app/message/send", {}, JSON.stringify({
+			'name' : name,
+			'sendMode' : "TO_USER",
+			'fromUserId' : userId,
+			'toUserId' : "111",
+			'domain' : encodeURIComponent("http://test.c.open.163.com/admin/campus/addActivityPhase.do")
+		}));
+	}
+
+	function showGreeting(message) {
+		var response = document.getElementById('response');
+		var p = document.createElement('p');
+		p.style.wordWrap = 'break-word';
+		p.appendChild(document.createTextNode(message));
+		response.appendChild(p);
+	}
+</script>
+</head>
+<body onload="disconnect()">
+	<noscript>
+		<h2 style="color: #ff0000">Seems your browser doesn't support
+			Javascript! Websocket relies on Javascript being enabled. Please
+			enable Javascript and reload this page!</h2>
+	</noscript>
+	<div>
+		<div>
+			<button id="connect" onclick="connect();">Connect</button>
+			<button id="disconnect" disabled="disabled" onclick="disconnect();">Disconnect</button>
+		</div>
+		<div id="conversationDiv">
+			<label>What is your name?</label><input type="text" id="name" />
+			<button id="sendName" onclick="sendName();">Send</button>
+			<p id="response"></p>
+		</div>
+	</div>
+</body>
+</html>

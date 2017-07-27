@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:rabbit="http://www.springframework.org/schema/rabbit" xmlns:p="http://www.springframework.org/schema/p"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+http://www.springframework.org/schema/beans/spring-beans-4.0.xsd http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.0.xsd http://www.springframework.org/schema/rabbit http://www.springframework.org/schema/rabbit/spring-rabbit.xsd">
+
+	<!-- 连接本地rabbitmq -->
+	<rabbit:connection-factory id="connectionFactory" host="${rabbitmq.host}" port="${rabbitmq.port}" />
+
+	<rabbit:admin connection-factory="connectionFactory" id="amqpAdmin" />
+
+	<!-- queue 队列声明 -->
+	<rabbit:queue id="rabbitQueue" durable="true"
+		auto-delete="false" exclusive="false" name="rabbitQueue" />
+
+	<!-- exchange queue binging key 绑定 -->
+	<rabbit:direct-exchange name="mqExchange"
+		durable="true" auto-delete="false" id="mqExchange">
+		<rabbit:bindings>
+			<rabbit:binding queue="rabbitQueue" key="rabbitQueue" />
+		</rabbit:bindings>
+	</rabbit:direct-exchange>
+
+	<!-- spring template声明 -->
+	<rabbit:template exchange="mqExchange" id="amqpTemplate"
+		connection-factory="connectionFactory" />
+</beans>
