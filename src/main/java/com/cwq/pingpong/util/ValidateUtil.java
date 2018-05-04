@@ -10,7 +10,7 @@ import java.util.regex.Pattern;
 /**
  * Validate Utilities.
  *
-cwq
+ * @author cwq
  * @version $ v1.0 Sep 17, 2014 $
  */
 public class ValidateUtil {

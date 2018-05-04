@@ -38,7 +38,7 @@ import com.cwq.pingpong.dto.ResponseDto;
 import com.cwq.pingpong.enums.ExceptionEnum;
 import com.cwq.pingpong.exceptions.PingpongException;
 import com.cwq.pingpong.service.WebSocketService;
-import com.cwq.pingpong.transfer.HttpTransferData;
+import com.cwq.pingpong.transfer.HttpTransferEngine;
 import com.cwq.pingpong.util.ValidateUtil;
 import com.cwq.pingpong.util.HttpUtil.Response;
 
@@ -53,7 +53,7 @@ public class WebSocketController extends AbstractController {
 	private static final Logger logger = LoggerFactory.getLogger(WebSocketController.class);
 
 	@Autowired
-	private HttpTransferData pullData;
+	private HttpTransferEngine httpTransEngine;
 	@Autowired
 	private SimpMessagingTemplate messagingTemplate;
 	@Autowired
@@ -77,7 +77,7 @@ public class WebSocketController extends AbstractController {
 				if (!ValidateUtil.isUrl(request)) {
 					throw new PingpongException(ExceptionEnum.INVALID_PARAMETER, "domain is not url");
 				}
-				Response response = pullData.pull(request, null);
+				Response response = httpTransEngine.pull(request, null);
 				return response != null ? response.content : null;
 			}
 		});
@@ -110,11 +110,11 @@ public class WebSocketController extends AbstractController {
 			messagingTemplate.convertAndSend(dest, params);
 			break;
 		case TO_SERVER:
-			pullData.push(domain, params);
+			httpTransEngine.push(domain, params);
 			break;
 		case TO_USER_AND_SERVER:
 			messagingTemplate.convertAndSend(dest, params);
-			pullData.push(domain, params);
+			httpTransEngine.push(domain, params);
 			break;
 		default:
 			break;
